@@ -1,6 +1,6 @@
 # ThreatIntel
 
-A small, test-driven Python project for building a threat-intelligence processing pipeline around **Indicators of Compromise (IOCs)**.
+A test-driven Python project for building a threat-intelligence processing pipeline around **Indicators of Compromise (IOCs)**.
 
 The project is under active development. Its goal is to evolve from a simple IOC domain model into a modular pipeline capable of ingesting, normalizing, deduplicating, enriching, filtering, and exporting threat-intelligence data from multiple sources.
 
