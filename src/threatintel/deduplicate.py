@@ -13,29 +13,3 @@ def deduplicate_iocs(iocs: list[IOC]) -> list[IOC]:
             iocs_dict[key] = IOC(ioc.type, ioc.value, set(ioc.sources))
 
     return list(iocs_dict.values())
-
-
-print(deduplicate_iocs([
-    IOC(IOCType.DOMAIN, "evil.com", {"feed_a"}),
-    IOC(IOCType.IP, "203.0.113.42", {"feed_a"}),
-    IOC(IOCType.DOMAIN, "evil.com", {"feed_b"}),
-]))
-
-ioc1 = IOC(
-    IOCType.DOMAIN,
-    "evil.com",
-    {"feed_a"},
-)
-
-ioc2 = IOC(
-    IOCType.DOMAIN,
-    "evil.com",
-    {"feed_b"},
-)
-
-iocs = [ioc1, ioc2]
-
-result = deduplicate_iocs(iocs)
-
-print(result)
-print(ioc1)
