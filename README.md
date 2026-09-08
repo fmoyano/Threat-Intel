@@ -11,9 +11,15 @@ Implemented so far:
 - `IOC` domain model
 - `IOCType` enumeration
 - Tracking of the sources that reported each IOC
-- Deduplication of IOCs by type and value
+- Validation and normalization of:
+  - IPv4 and IPv6 addresses
+  - domain names
+  - SHA-256 hashes
+- Deduplication of IOCs using `(type, value)` as identity
 - Merging of source information when duplicate IOCs are found
-- Unit tests for the current behavior
+- Non-destructive transformations: processing does not mutate input IOCs
+- Processing pipeline combining normalization and deduplication
+- Unit and integration tests with `pytest`
 - Standard `src/` project layout
 - Packaging through `pyproject.toml`
 
@@ -53,8 +59,13 @@ ThreatIntel/
 │   └── threatintel/
 │       ├── __init__.py
 │       ├── models.py
-│       └── deduplicate.py
+│       ├── normalize.py
+│       ├── deduplicate.py
+│       └── pipeline.py
 ├── tests/
+│   ├── test_normalize.py
+│   ├── test_deduplicate.py
+│   └── test_pipeline.py
 ├── pyproject.toml
 └── README.md
 ```
@@ -65,10 +76,11 @@ ThreatIntel/
 - [x] Define IOC types
 - [x] Define the IOC data model
 - [x] Track IOC sources
+- [x] Normalize IOC values
+- [x] Validate IOC values
 - [x] Deduplicate IOCs
 - [x] Merge source information for duplicates
-- [ ] Normalize IOC values
-- [ ] Validate IOC values
+- [x] Compose normalization and deduplication into a processing pipeline
 
 ### 2. Feed ingestion
 - [ ] Define a common feed interface
