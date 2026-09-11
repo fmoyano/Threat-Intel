@@ -1,0 +1,22 @@
+[
+  {
+    "type": "domain",
+    "value": "EVIL.COM.",
+    "source": "feed_a"
+  },
+  {
+    "type": "domain",
+    "value": "evil.com",
+    "source": "feed_b"
+  },
+  {
+    "type": "ip",
+    "value": "192.168.1.10",
+    "source": "feed_a"
+  },
+  {
+    "type": "sha256",
+    "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "source": "feed_c"
+  }
+]

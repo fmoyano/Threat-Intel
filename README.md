@@ -19,7 +19,11 @@ Implemented so far:
 - Merging of source information when duplicate IOCs are found
 - Non-destructive transformations: processing does not mutate input IOCs
 - Processing pipeline combining normalization and deduplication
-- Unit and integration tests with `pytest`
+- Parsing of external IOC records
+- JSON file ingestion
+- Processing statistics, including duplicate and per-type counts
+- Command-line interface for processing JSON IOC files
+- Unit, integration, and end-to-end tests with `pytest`
 - Standard `src/` project layout
 - Packaging through `pyproject.toml`
 
@@ -32,6 +36,9 @@ Threat intelligence feeds
           |
           v
       Ingestion
+          |
+          v
+       Parsing
           |
           v
     Normalization
@@ -49,25 +56,65 @@ Threat intelligence feeds
    Export / Persistence
 ```
 
-Each stage will be kept as independent as practical so that new feeds, enrichment providers, storage backends, or output formats can be added without tightly coupling the whole pipeline.
+Each stage is kept as independent as practical so that new feeds, enrichment providers, storage backends, or output formats can be added without tightly coupling the whole pipeline.
 
 ## Project structure
 
 ```text
 ThreatIntel/
+├── samples/
+│   └── iocs.json
 ├── src/
 │   └── threatintel/
 │       ├── __init__.py
 │       ├── models.py
+│       ├── parser.py
 │       ├── normalize.py
 │       ├── deduplicate.py
-│       └── pipeline.py
+│       ├── pipeline.py
+│       ├── ingest.py
+│       ├── stats.py
+│       └── cli.py
 ├── tests/
+│   ├── test_parser.py
 │   ├── test_normalize.py
 │   ├── test_deduplicate.py
-│   └── test_pipeline.py
+│   ├── test_pipeline.py
+│   ├── test_ingest.py
+│   ├── test_stats.py
+│   ├── test_cli.py
+│   └── test_end_to_end.py
 ├── pyproject.toml
 └── README.md
+```
+
+## Usage
+
+Install the project in editable mode:
+
+```bash
+python -m pip install -e .
+```
+
+Run the test suite:
+```bash
+python -m pytest
+```
+
+Process the included sample IOC file:
+```bash
+python -m threatintel.cli samples/iocs.json
+```
+
+Example output:
+```
+Indicators processed: 4
+Unique indicators: 3
+Duplicates: 1
+
+ip: 1
+domain: 1
+sha256: 1
 ```
 
 ## Roadmap
@@ -84,10 +131,11 @@ ThreatIntel/
 
 ### 2. Feed ingestion
 - [ ] Define a common feed interface
-- [ ] Add local file ingestion
+- [x] Add local JSON file ingestion
+- [x] Parse and validate external IOC records
+- [x] Reject malformed or incomplete IOC entries
+- [x] Add ingestion tests
 - [ ] Add at least one real threat-intelligence feed
-- [ ] Handle malformed or incomplete feed entries
-- [ ] Add ingestion tests
 
 ### 3. Enrichment
 - [ ] Define an enrichment interface
@@ -110,7 +158,9 @@ ThreatIntel/
 - [ ] Preserve source and enrichment metadata
 
 ### 6. CLI and usability
-- [ ] Add a command-line interface
+- [x] Add a command-line interface
+- [x] Process local JSON IOC files from the CLI
+- [x] Display processing statistics
 - [ ] Allow feed selection from the CLI
 - [ ] Add filtering options
 - [ ] Add machine-readable output modes
@@ -118,6 +168,7 @@ ThreatIntel/
 
 ### 7. Engineering quality
 - [x] Unit tests for the initial core
+- [x] Integration and end-to-end tests for the current pipeline
 - [ ] Increase test coverage as modules are added
 - [ ] Add static analysis / linting
 - [ ] Add type checking
@@ -143,9 +194,3 @@ The project is intentionally being built in small steps, with emphasis on:
 Threat-intelligence systems often need to combine indicators from heterogeneous sources while retaining enough context to reason about where the data came from, whether multiple sources agree, and how fresh or trustworthy an observation is.
 
 This repository explores those problems through a progressively more realistic Python implementation, with a focus on software-engineering fundamentals as well as security-oriented data processing.
-
-## Status
-
-**Work in progress.**
-
-The repository currently contains the first core building blocks. The roadmap above reflects planned work and will be updated as functionality is implemented.
