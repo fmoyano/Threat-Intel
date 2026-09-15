@@ -14,7 +14,7 @@ def test_load_iocs_from_json(tmp_path):
             "type": "ip",
             "value": "192.168.1.1",
             "source": "feed_b",
-        },
+        }
     ]
 
     path = tmp_path / "iocs.json"

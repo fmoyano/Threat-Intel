@@ -26,67 +26,46 @@ Implemented so far:
 - Unit, integration, and end-to-end tests with `pytest`
 - Standard `src/` project layout
 - Packaging through `pyproject.toml`
+- Parsing and validation of external IOC records
+- Local JSON file ingestion
+- ThreatFox IOC adapter supporting domains and SHA-256 hashes
+- ThreatFox HTTP client with explicit timeouts and HTTP error handling (mock)
+- Offline HTTP testing using mocks / monkeypatching
+- Integration tests across HTTP client, ThreatFox adapter, and IOC processing pipeline
+- Cross-source IOC deduplication while preserving provenance
 
 ## Architecture
 
 The project is being developed incrementally around the following pipeline:
 
 ```text
-Threat intelligence feeds
-          |
-          v
-      Ingestion
-          |
-          v
-       Parsing
-          |
-          v
-    Normalization
-          |
-          v
-    Deduplication
-          |
-          v
-     Enrichment
-          |
-          v
- Filtering / Analysis
-          |
-          v
-   Export / Persistence
+Local JSON                         ThreatFox API
+   |                                  |
+   v                                  v
+Ingestion                         HTTP client
+   |                                  |
+   v                                  v
+Parsing                        ThreatFox adapter
+   |                                  |
+   +---------------+------------------+
+                   |
+                   v
+              list[IOC]
+                   |
+                   v
+             Normalization
+                   |
+                   v
+             Deduplication
+                   |
+                   v
+              Statistics
+                   |
+                   v
+             CLI / Output
 ```
 
 Each stage is kept as independent as practical so that new feeds, enrichment providers, storage backends, or output formats can be added without tightly coupling the whole pipeline.
-
-## Project structure
-
-```text
-ThreatIntel/
-├── samples/
-│   └── iocs.json
-├── src/
-│   └── threatintel/
-│       ├── __init__.py
-│       ├── models.py
-│       ├── parser.py
-│       ├── normalize.py
-│       ├── deduplicate.py
-│       ├── pipeline.py
-│       ├── ingest.py
-│       ├── stats.py
-│       └── cli.py
-├── tests/
-│   ├── test_parser.py
-│   ├── test_normalize.py
-│   ├── test_deduplicate.py
-│   ├── test_pipeline.py
-│   ├── test_ingest.py
-│   ├── test_stats.py
-│   ├── test_cli.py
-│   └── test_end_to_end.py
-├── pyproject.toml
-└── README.md
-```
 
 ## Usage
 
@@ -130,12 +109,17 @@ sha256: 1
 - [x] Compose normalization and deduplication into a processing pipeline
 
 ### 2. Feed ingestion
-- [ ] Define a common feed interface
 - [x] Add local JSON file ingestion
 - [x] Parse and validate external IOC records
-- [x] Reject malformed or incomplete IOC entries
-- [x] Add ingestion tests
-- [ ] Add at least one real threat-intelligence feed
+- [x] Handle malformed or incomplete local feed entries
+- [x] Add ThreatFox response adapter
+- [x] Add ThreatFox HTTP client
+- [x] Add offline tests for ThreatFox integration
+- [x] Deduplicate IOCs across heterogeneous sources
+- [ ] Configure secure ThreatFox authentication
+- [ ] Perform live ThreatFox ingestion
+- [ ] Define a common feed interface
+- [ ] Add additional threat-intelligence feeds
 
 ### 3. Enrichment
 - [ ] Define an enrichment interface
@@ -169,6 +153,7 @@ sha256: 1
 ### 7. Engineering quality
 - [x] Unit tests for the initial core
 - [x] Integration and end-to-end tests for the current pipeline
+- [x] Mocked HTTP tests without external network dependencies
 - [ ] Increase test coverage as modules are added
 - [ ] Add static analysis / linting
 - [ ] Add type checking
