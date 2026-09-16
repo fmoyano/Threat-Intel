@@ -1,73 +1,88 @@
 # ThreatIntel
 
-A test-driven Python project for building a threat-intelligence processing pipeline around **Indicators of Compromise (IOCs)**.
+A test-driven Python project for building a modular threat-intelligence processing pipeline around **Indicators of Compromise (IOCs)**.
 
-The project is under active development. Its goal is to evolve from a simple IOC domain model into a modular pipeline capable of ingesting, normalizing, deduplicating, enriching, filtering, and exporting threat-intelligence data from multiple sources.
+The project is being developed incrementally, with an emphasis on clear data models, explicit provenance, testable transformations, and separation between source-specific ingestion and source-independent processing.
 
-## Current status
+## What it does today
 
-Implemented so far:
+ThreatIntel currently supports:
 
-- `IOC` domain model
-- `IOCType` enumeration
-- Tracking of the sources that reported each IOC
-- Validation and normalization of:
-  - IPv4 and IPv6 addresses
-  - domain names
-  - SHA-256 hashes
-- Deduplication of IOCs using `(type, value)` as identity
-- Merging of source information when duplicate IOCs are found
-- Non-destructive transformations: processing does not mutate input IOCs
-- Processing pipeline combining normalization and deduplication
-- Parsing of external IOC records
-- JSON file ingestion
-- Processing statistics, including duplicate and per-type counts
-- Command-line interface for processing JSON IOC files
-- Unit, integration, and end-to-end tests with `pytest`
-- Standard `src/` project layout
-- Packaging through `pyproject.toml`
-- Parsing and validation of external IOC records
-- Local JSON file ingestion
-- ThreatFox IOC adapter supporting domains and SHA-256 hashes
-- ThreatFox HTTP client with explicit timeouts and HTTP error handling (mock)
-- Offline HTTP testing using mocks / monkeypatching
-- Integration tests across HTTP client, ThreatFox adapter, and IOC processing pipeline
-- Cross-source IOC deduplication while preserving provenance
+- an `IOC` domain model with source provenance;
+- IOC types for IP addresses, domain names, and SHA-256 hashes;
+- validation and normalization of:
+  - IPv4 and IPv6 addresses;
+  - domain names;
+  - SHA-256 hashes;
+- deduplication using `(type, value)` as IOC identity;
+- merging source information when duplicate indicators are found;
+- non-destructive processing: input IOC objects are not mutated;
+- local JSON ingestion and parsing;
+- processing statistics:
+  - indicators processed;
+  - unique indicators;
+  - duplicates;
+  - counts by IOC type;
+- a CLI for processing local JSON IOC files;
+- live ThreatFox ingestion through an authenticated HTTPS client;
+- a ThreatFox adapter that converts supported external IOC types into the internal model;
+- cross-source deduplication while preserving provenance;
+- unit, integration, end-to-end, and mocked HTTP tests with `pytest`.
 
 ## Architecture
 
-The project is being developed incrementally around the following pipeline:
+Each external source has its own ingestion path. Supported records are converted into the common `IOC` model before entering the shared processing pipeline.
 
 ```text
-Local JSON                         ThreatFox API
-   |                                  |
-   v                                  v
-Ingestion                         HTTP client
-   |                                  |
-   v                                  v
-Parsing                        ThreatFox adapter
-   |                                  |
-   +---------------+------------------+
-                   |
-                   v
-              list[IOC]
-                   |
-                   v
-             Normalization
-                   |
-                   v
-             Deduplication
-                   |
-                   v
-              Statistics
-                   |
-                   v
-             CLI / Output
+Local JSON                              ThreatFox API
+    |                                       |
+    v                                       v
+Ingestion                              HTTP client
+    |                                       |
+    v                                       v
+Parsing                              ThreatFox adapter
+    |                                       |
+    +-------------------+-------------------+
+                        |
+                        v
+                    list[IOC]
+                        |
+                        v
+                  Normalization
+                        |
+                        v
+                  Deduplication
+                        |
+                        v
+                   Statistics
+                        |
+                        v
+                  CLI / Output
 ```
 
-Each stage is kept as independent as practical so that new feeds, enrichment providers, storage backends, or output formats can be added without tightly coupling the whole pipeline.
+This keeps source-specific formats, authentication, and transport details outside the normalization and deduplication logic.
 
-## Usage
+## Supported IOC types
+
+The internal model currently supports:
+
+| Internal type | Notes |
+|---|---|
+| `IP` | IPv4 and IPv6 normalization |
+| `DOMAIN` | ASCII domain validation and normalization |
+| `SHA256` | 64-character hexadecimal SHA-256 values |
+
+ThreatFox currently maps:
+
+| ThreatFox type | Internal type |
+|---|---|
+| `domain` | `DOMAIN` |
+| `sha256_hash` | `SHA256` |
+
+Unsupported ThreatFox types are ignored rather than coerced into incompatible internal types.
+
+
+## Installation
 
 Install the project in editable mode:
 
@@ -75,18 +90,39 @@ Install the project in editable mode:
 python -m pip install -e .
 ```
 
-Run the test suite:
+For development, including test dependencies:
+
+```bash
+python -m pip install -e .[dev]
+```
+
+## Running the tests
+
+Run the complete test suite with:
+
 ```bash
 python -m pytest
 ```
 
+The suite includes:
+
+- unit tests for parsing, normalization, deduplication, statistics, configuration, and feed-specific components;
+- CLI tests;
+- integration and end-to-end tests;
+- mocked HTTP tests that do not require Internet access or real credentials;
+- cross-source processing tests.
+
+## Local JSON usage
+
 Process the included sample IOC file:
+
 ```bash
 python -m threatintel.cli samples/iocs.json
 ```
 
 Example output:
-```
+
+```text
 Indicators processed: 4
 Unique indicators: 3
 Duplicates: 1
@@ -96,71 +132,135 @@ domain: 1
 sha256: 1
 ```
 
+## ThreatFox integration
+
+ThreatFox authentication is provided through the `THREATFOX_AUTH_KEY` environment variable.
+
+**Never store the real key in source code, tests, sample files, the README, or Git history.**
+
+For example, in PowerShell, configure it for the current shell session:
+
+```powershell
+$env:THREATFOX_AUTH_KEY = "YOUR_KEY"
+```
+
+Retrieve recent ThreatFox IOCs through the orchestration layer:
+
+```python
+from threatintel.feeds.threatfox_orchestrator import get_threatfox_iocs
+
+iocs = get_threatfox_iocs(days=1)
+```
+
+The returned values are internal `IOC` objects and can be passed through the shared pipeline:
+
+```python
+from threatintel.pipeline import process_iocs
+
+processed_iocs = process_iocs(iocs)
+```
+
+The ThreatFox client uses authenticated HTTPS requests with an explicit timeout and propagates HTTP, timeout, and JSON-decoding failures to callers.
+
+## Cross-source processing
+
+Indicators from heterogeneous sources can be combined before processing:
+
+```text
+Local feed ──────┐
+                 ├──> normalization ──> deduplication
+ThreatFox ───────┘
+```
+
+For example:
+
+```text
+Local:
+    EVIL.COM.
+    source = local_feed
+
+ThreatFox:
+    evil.com
+    source = threatfox
+```
+
+becomes:
+
+```text
+DOMAIN
+value = evil.com
+sources = {"local_feed", "threatfox"}
+```
+
+This makes source provenance part of the model while allowing equivalent observations to converge on one canonical IOC.
+
 ## Roadmap
 
-### 1. Core IOC model
-- [x] Define IOC types
-- [x] Define the IOC data model
-- [x] Track IOC sources
-- [x] Normalize IOC values
-- [x] Validate IOC values
-- [x] Deduplicate IOCs
-- [x] Merge source information for duplicates
-- [x] Compose normalization and deduplication into a processing pipeline
+### IOC model and processing
 
-### 2. Feed ingestion
-- [x] Add local JSON file ingestion
+- [x] Define IOC types and the IOC data model
+- [x] Track source provenance
+- [x] Validate and normalize IOC values
+- [x] Deduplicate by `(type, value)`
+- [x] Merge source information
+- [x] Compose normalization and deduplication into a processing pipeline
+- [ ] Add `IP_PORT`
+- [ ] Add URL support
+- [ ] Add SHA-1 and MD5 support
+
+### Feed ingestion
+
+- [x] Add local JSON ingestion
 - [x] Parse and validate external IOC records
-- [x] Handle malformed or incomplete local feed entries
-- [x] Add ThreatFox response adapter
 - [x] Add ThreatFox HTTP client
-- [x] Add offline tests for ThreatFox integration
+- [x] Add ThreatFox response adapter
+- [x] Read ThreatFox authentication from the environment
+- [x] Add a ThreatFox orchestration layer
+- [x] Validate live ThreatFox ingestion
 - [x] Deduplicate IOCs across heterogeneous sources
-- [ ] Configure secure ThreatFox authentication
-- [ ] Perform live ThreatFox ingestion
 - [ ] Define a common feed interface
 - [ ] Add additional threat-intelligence feeds
 
-### 3. Enrichment
+### Enrichment and analysis
+
 - [ ] Define an enrichment interface
 - [ ] Add contextual metadata to IOCs
 - [ ] Preserve provenance of enrichment data
-- [ ] Handle unavailable or rate-limited enrichment services
-
-### 4. Querying and analysis
-- [ ] Filter by IOC type
-- [ ] Filter by source
-- [ ] Search by value
-- [ ] Add basic confidence / scoring concepts
 - [ ] Add timestamps and freshness handling
+- [ ] Add basic confidence / scoring concepts
+- [ ] Filter by IOC type and source
+- [ ] Search by value
 
-### 5. Persistence and output
+### Persistence and output
+
 - [ ] Export normalized IOCs
 - [ ] Add JSON output
 - [ ] Add CSV output
-- [ ] Evaluate lightweight persistence
+- [ ] Add lightweight persistence
 - [ ] Preserve source and enrichment metadata
 
-### 6. CLI and usability
-- [x] Add a command-line interface
+### CLI and usability
+
 - [x] Process local JSON IOC files from the CLI
 - [x] Display processing statistics
-- [ ] Allow feed selection from the CLI
+- [ ] Add ThreatFox as a CLI-selectable source
+- [ ] Add feed selection
 - [ ] Add filtering options
 - [ ] Add machine-readable output modes
-- [ ] Improve error reporting
+- [ ] Improve user-facing error reporting
 
-### 7. Engineering quality
-- [x] Unit tests for the initial core
-- [x] Integration and end-to-end tests for the current pipeline
+### Engineering quality
+
+- [x] Unit tests for core components
+- [x] Integration and end-to-end tests
 - [x] Mocked HTTP tests without external network dependencies
-- [ ] Increase test coverage as modules are added
+- [x] Tests for configuration and failure propagation
 - [ ] Add static analysis / linting
 - [ ] Add type checking
 - [ ] Add CI with GitHub Actions
 - [ ] Add structured logging
 - [ ] Document architecture decisions
-
+- [ ] Add performance benchmarks as the pipeline grows
 
 ## Design principles
 
@@ -169,13 +269,15 @@ The project is intentionally being built in small steps, with emphasis on:
 - clear data models;
 - explicit provenance of threat-intelligence data;
 - deterministic and testable transformations;
-- separation between ingestion, processing, enrichment, and output;
+- separation between source-specific ingestion and source-independent processing;
+- isolation of external services behind small clients and adapters;
+- explicit network timeouts and predictable failure behavior;
+- secrets kept outside source code and Git history;
 - readable Python rather than unnecessary abstraction;
 - incremental evolution toward a realistic threat-intelligence workflow.
-
 
 ## Why this project
 
 Threat-intelligence systems often need to combine indicators from heterogeneous sources while retaining enough context to reason about where the data came from, whether multiple sources agree, and how fresh or trustworthy an observation is.
 
-This repository explores those problems through a progressively more realistic Python implementation, with a focus on software-engineering fundamentals as well as security-oriented data processing.
+This repository explores those problems through a progressively more realistic Python implementation, with a focus on software-engineering fundamentals, networked services, testability, and security-oriented data processing.
