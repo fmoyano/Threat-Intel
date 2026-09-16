@@ -3,6 +3,7 @@ import json
 from threatintel.ingest import load_iocs_from_json
 from threatintel.models import IOCType
 
+
 def test_load_iocs_from_json(tmp_path):
     data = [
         {

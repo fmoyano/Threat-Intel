@@ -1,6 +1,23 @@
 import ipaddress
-from unicodedata import normalize
+
 from threatintel.models import IOC, IOCType
+
+
+def normalize_ip_port(value: str) -> str:
+    ip_port = value.split(":")
+    if len(ip_port) != 2:
+        raise ValueError("IP:PORT format malformed.")
+
+    ip = normalize_ip(ip_port[0])
+    port = int(ip_port[1])
+
+    min_port_number_allowed = 0
+    max_port_number_allowed = 65535
+    if port < min_port_number_allowed or port > max_port_number_allowed:
+        raise ValueError(f"{port} is not a valid port number between {min_port_number_allowed} \
+            and {max_port_number_allowed}")
+
+    return ":".join([ip, str(port)])
 
 def normalize_ip(value: str) -> str:
     return str(ipaddress.ip_address(value))
@@ -48,6 +65,8 @@ def normalize_ioc(ioc: IOC) -> IOC:
         normalized_value = normalize_ip(ioc.value)
     elif ioc.type == IOCType.SHA256:
         normalized_value = normalize_sha256(ioc.value)
+    elif ioc.type == IOCType.IP_PORT:
+        normalized_value = normalize_ip_port(ioc.value)
     else:
         raise ValueError(f"Unsupported IOC type: {ioc.type}")
 

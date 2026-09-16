@@ -1,9 +1,10 @@
-from sys import argv
 import argparse
+from sys import argv
 
 from threatintel.ingest import load_iocs_from_json
 from threatintel.pipeline import process_iocs
 from threatintel.stats import compute_stats
+
 
 def main(arguments: list[str]) -> None:
     parser = argparse.ArgumentParser(prog="show-stats")

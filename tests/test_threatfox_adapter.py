@@ -1,6 +1,8 @@
 import pytest
-from threatintel.models import IOCType
+
 from threatintel.feeds.threatfox_adapter import threatfox_adapt_ioc_list
+from threatintel.models import IOCType
+
 
 def test_valid_domain():
     tf_data = {

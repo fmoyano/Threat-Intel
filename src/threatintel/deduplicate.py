@@ -1,4 +1,5 @@
-from threatintel.models import IOC, IOCType
+from threatintel.models import IOC
+
 
 def deduplicate_iocs(iocs: list[IOC]) -> list[IOC]:
     

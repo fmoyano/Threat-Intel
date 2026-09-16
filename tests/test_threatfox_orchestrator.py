@@ -1,7 +1,9 @@
 import pytest
+
 from threatintel.feeds import threatfox_orchestrator
 from threatintel.feeds.threatfox_orchestrator import get_threatfox_iocs
 from threatintel.models import IOC, IOCType
+
 
 def test_threatfox_orchestrator_happy_path(monkeypatch):
 

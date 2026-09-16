@@ -1,5 +1,5 @@
-from threatintel.models import IOC, IOCType
 from threatintel.deduplicate import deduplicate_iocs
+from threatintel.models import IOC, IOCType
 
 
 def test_empty_list():
@@ -25,7 +25,7 @@ def test_duplicates_combine_sources():
 def test_input_not_change():
     ioc1 = IOC(IOCType.DOMAIN, "evil.com", {"feed_a"})
     ioc2 = IOC(IOCType.DOMAIN, "evil.com", {"feed_b"})
-    result = deduplicate_iocs([ioc1, ioc2])
+    deduplicate_iocs([ioc1, ioc2])
 
     assert ioc1.sources == {"feed_a"}
     assert ioc2.sources == {"feed_b"}

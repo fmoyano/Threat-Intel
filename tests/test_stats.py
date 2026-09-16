@@ -1,9 +1,10 @@
 import json
 
-from threatintel.models import IOC, IOCType
 from threatintel.ingest import load_iocs_from_json
+from threatintel.models import IOC, IOCType
 from threatintel.pipeline import process_iocs
 from threatintel.stats import compute_stats
+
 
 def test_stats_end_to_end(tmp_path):
     data = [

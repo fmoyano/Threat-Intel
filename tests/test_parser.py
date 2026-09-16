@@ -1,6 +1,8 @@
 import pytest
+
 from threatintel.models import IOCType
 from threatintel.parser import parse_ioc, parse_iocs
+
 
 def test_parse_valid_domain():
     dict_ioc = {
@@ -61,7 +63,7 @@ def test_parse_field_type_error():
         "value": "192.168.1.1",
         "source": "feed_a",
     }
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         parse_ioc(dict_ioc)
 
 def test_parse_field_type_error2():
@@ -70,7 +72,7 @@ def test_parse_field_type_error2():
         "value": "evil.com",
         "source": 123
     }
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         parse_ioc(dict_ioc)
 
 def test_parse_no_error_more_fields():
@@ -125,5 +127,5 @@ def test_parse_one_invalid_entry():
         "source": 1,
     }]
     
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         parse_iocs(list_iocs)

@@ -1,6 +1,8 @@
 import pytest
+
 from threatintel.models import IOC, IOCType
 from threatintel.pipeline import process_iocs
+
 
 def test_pipeline_same_ioc():
     iocs = [IOC(IOCType.DOMAIN, "EVIL.COM.", {"feed_a"}),

@@ -1,10 +1,12 @@
 import json
+
 from threatintel.feeds import threatfox_client
-from threatintel.feeds.threatfox_client import fetch_recent_iocs
 from threatintel.feeds.threatfox_adapter import threatfox_adapt_ioc_list
+from threatintel.feeds.threatfox_client import fetch_recent_iocs
+from threatintel.ingest import load_iocs_from_json
 from threatintel.models import IOCType
 from threatintel.pipeline import process_iocs
-from threatintel.ingest import load_iocs_from_json
+
 
 class FakeResponse:
     def raise_for_status(self):

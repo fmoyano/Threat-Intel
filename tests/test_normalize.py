@@ -1,6 +1,13 @@
 import pytest
+
 from threatintel.models import IOC, IOCType
-from threatintel.normalize import normalize_ioc, normalize_ip, normalize_domain, normalize_sha256
+from threatintel.normalize import (
+    normalize_domain,
+    normalize_ioc,
+    normalize_ip,
+    normalize_sha256,
+)
+
 
 def test_valid_ipv4():
     ipv4 = "192.168.1.10"
@@ -117,3 +124,26 @@ def test_normalization_original_untouched():
 
     assert result.sources == {"feed_a"}
     assert ioc.value == "A" * 64
+
+def test_normalization_ip_port():
+    ip_port = "192.100.1.1:80"
+    result = normalize_ioc(IOC(IOCType.IP_PORT, ip_port, {"feed_a"}))
+
+    assert result.sources == {"feed_a"}
+    assert result.value == ip_port
+
+def test_normalization_ip_port_incorrect_ip():
+    with pytest.raises(ValueError):
+        normalize_ioc(IOC(IOCType.IP_PORT, "999.1.1.1:80", {"feed_a"}))
+  
+def test_normalization_ip_port_too_big_port():
+    with pytest.raises(ValueError):
+        normalize_ioc(IOC(IOCType.IP_PORT, "128.1.1.1:65536", {"feed_a"}))
+
+def test_normalization_ip_port_too_small_port():
+    with pytest.raises(ValueError):
+        normalize_ioc(IOC(IOCType.IP_PORT, "128.1.1.1:-1", {"feed_a"}))
+
+def test_normalization_ip_port_non_numeric_port():
+     with pytest.raises(ValueError):
+        normalize_ioc(IOC(IOCType.IP_PORT, "128.1.1.1:abc", {"feed_a"}))

@@ -1,5 +1,7 @@
 import pytest
+
 from threatintel.config import get_threatfox_auth_key
+
 
 def test_defined_variable(monkeypatch):
     monkeypatch.setenv("THREATFOX_AUTH_KEY", "123456")

@@ -1,8 +1,9 @@
 import json
 
-from threatintel.models import IOCType
 from threatintel.ingest import load_iocs_from_json
+from threatintel.models import IOCType
 from threatintel.pipeline import process_iocs
+
 
 def test_end_to_end_json_processing(tmp_path):
     data = [
@@ -45,5 +46,3 @@ def test_end_to_end_json_processing(tmp_path):
     assert result_by_type[IOCType.IP].sources == {"feed_a"}
     assert result_by_type[IOCType.SHA256].value == "a" * 64
     assert result_by_type[IOCType.SHA256].sources == {"feed_c"}
-
-    

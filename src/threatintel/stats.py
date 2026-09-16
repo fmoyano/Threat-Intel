@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from threatintel.models import IOCType, IOC
+
+from threatintel.models import IOC, IOCType
+
 
 @dataclass
 class Stats:

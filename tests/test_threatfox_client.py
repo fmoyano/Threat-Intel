@@ -1,8 +1,11 @@
+from collections.abc import Callable
+
 import pytest
-from typing import Callable
 from requests import HTTPError, Timeout
+
 from threatintel.feeds import threatfox_client
 from threatintel.feeds.threatfox_client import THREATFOX_API_URL, fetch_recent_iocs
+
 
 def test_0days_fails():
     with pytest.raises(ValueError):
