@@ -5,6 +5,7 @@ from threatintel.normalize import (
     normalize_domain,
     normalize_ioc,
     normalize_ip,
+    normalize_ip_port,
     normalize_sha256,
 )
 
@@ -125,25 +126,54 @@ def test_normalization_original_untouched():
     assert result.sources == {"feed_a"}
     assert ioc.value == "A" * 64
 
-def test_normalization_ip_port():
-    ip_port = "192.100.1.1:80"
-    result = normalize_ioc(IOC(IOCType.IP_PORT, ip_port, {"feed_a"}))
+@pytest.mark.parametrize("value",
+    [
+        "128.1.1.1:65535",
+        "128.1.1.1:0",
+    ])
+def test_normalization_ip_port_limits(value):    
+    assert normalize_ip_port(value) == value
 
-    assert result.sources == {"feed_a"}
-    assert result.value == ip_port
+def test_normalization_ip_port_non_canonical():    
+    assert normalize_ip_port("128.1.1.1:00443") == "128.1.1.1:443"
 
 def test_normalization_ip_port_incorrect_ip():
     with pytest.raises(ValueError):
-        normalize_ioc(IOC(IOCType.IP_PORT, "999.1.1.1:80", {"feed_a"}))
-  
-def test_normalization_ip_port_too_big_port():
-    with pytest.raises(ValueError):
-        normalize_ioc(IOC(IOCType.IP_PORT, "128.1.1.1:65536", {"feed_a"}))
+        normalize_ip_port("999.1.1.1:80")
 
-def test_normalization_ip_port_too_small_port():
-    with pytest.raises(ValueError):
-        normalize_ioc(IOC(IOCType.IP_PORT, "128.1.1.1:-1", {"feed_a"}))
 
-def test_normalization_ip_port_non_numeric_port():
+def test_normalization_ip_port_invalid_port_value():
+    with pytest.raises(ValueError):
+        normalize_ip_port("128.1.1.1:65536")
+
+
+@pytest.mark.parametrize("value",
+    [        
+        "128.1.1.1:abc",
+        "128.1.1.1:+80",
+        "128.1.1.1: 80",
+        "128.1.1.1:1_000",
+        "128.1.1.1:",
+        "128.1.1.1:-1"
+    ])
+def test_normalization_ip_port_invalid_port_syntax(value):
      with pytest.raises(ValueError):
-        normalize_ioc(IOC(IOCType.IP_PORT, "128.1.1.1:abc", {"feed_a"}))
+        normalize_ip_port(value)
+
+@pytest.mark.parametrize("value",
+    [        
+        "128.1.1.1",
+        "128.1.1.1:80:",
+        "128.1.1.1:80:90"
+    ])
+def test_normalization_ip_port_wrong_format(value):
+     with pytest.raises(ValueError):
+        normalize_ip_port(value)
+
+def test_normalization_ip_port_numeric_unicode_fails():
+    with pytest.raises(ValueError):
+        normalize_ip_port("192.168.1.3:٤")
+
+def test_normalization_ip_port_rejects_ipv6():
+    with pytest.raises(ValueError):
+        normalize_ip_port("[2001:db8::1]:443")

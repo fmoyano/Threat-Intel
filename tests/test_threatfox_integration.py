@@ -30,6 +30,10 @@ class FakeResponse:
                         "ioc": "http:example.com",
                         "ioc_type": "url"
                     },
+                    {
+                        "ioc": "192.168.1.1:0080",
+                        "ioc_type": "ip:port"
+                    }
                 ]}
 
 def fake_post(url: str, headers: dict, json: dict, timeout: int) -> FakeResponse:
@@ -42,13 +46,15 @@ def test_threatfox_integration(monkeypatch):
     assert result["query_status"] == "ok"
 
     adapted_list = threatfox_adapt_ioc_list(result)
-    assert len(adapted_list) == 3
+    assert len(adapted_list) == 4
 
     final_list = process_iocs(adapted_list)    
-    assert len(final_list) == 2
+    assert len(final_list) == 3
 
     final_list_by_type = {ioc.type: ioc for ioc in final_list}
     assert final_list_by_type[IOCType.DOMAIN].value == "evil.com"
     assert final_list_by_type[IOCType.DOMAIN].sources == {"threatfox"}
     assert final_list_by_type[IOCType.SHA256].value == "a" * 64
     assert final_list_by_type[IOCType.SHA256].sources == {"threatfox"}
+    assert final_list_by_type[IOCType.IP_PORT].value == "192.168.1.1:80"
+    assert final_list_by_type[IOCType.IP_PORT].sources == {"threatfox"}

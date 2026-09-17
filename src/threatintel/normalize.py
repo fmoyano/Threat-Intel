@@ -6,9 +6,16 @@ from threatintel.models import IOC, IOCType
 def normalize_ip_port(value: str) -> str:
     ip_port = value.split(":")
     if len(ip_port) != 2:
-        raise ValueError("IP:PORT format malformed.")
+        raise ValueError("Incorrect IP:PORT format.")
 
     ip = normalize_ip(ip_port[0])
+
+    if not ip_port[1]:
+        raise ValueError("Empty port.")
+
+    if not (ip_port[1].isnumeric() and ip_port[1].isascii()):
+        raise ValueError("Expected numeric ascii integer for port.")
+
     port = int(ip_port[1])
 
     min_port_number_allowed = 0
@@ -38,7 +45,7 @@ def normalize_domain(value: str) -> str:
         if not label:
             raise ValueError("Empty labels not allowed")
         if label[0] == "-" or label[-1] == "-":
-            raise ValueError(f"Labels cannot start or end with ""-"".")
+            raise ValueError("Labels cannot start or end with ""-"".")
 
         for ch in label:
             if not ((ch.isalnum() and ch.isascii()) or ch == "-"):

@@ -18,7 +18,7 @@ def main(arguments: list[str]) -> None:
     print(f"Indicators processed: {stats.indicators_processed}")
     print(f"Unique indicators: {stats.unique_indicators}")
     print(f"Duplicates: {stats.duplicates}")
-    print("")
+    print()
     
     for ioc_type in stats.count_by_type:
         print(f"{ioc_type.value}: {stats.count_by_type[ioc_type]}")

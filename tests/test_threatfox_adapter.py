@@ -63,20 +63,6 @@ def test_ignore_url():
     result = threatfox_adapt_ioc_list(tf_data)
     assert len(result) == 0
 
-def test_ignore_ipport():
-    tf_data = {
-        "query_status": "ok",
-        "data": [
-            {
-                "ioc": "192.168.1.1:80",
-                "ioc_type": "ip:port",
-                "url_value": "http://example.com"
-            }            
-        ]
-    }
-
-    result = threatfox_adapt_ioc_list(tf_data)
-    assert len(result) == 0
 
 def test_url_domain():
     tf_data = {
@@ -186,7 +172,7 @@ def test_missing_data():
         "query_status": "ok"        
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         threatfox_adapt_ioc_list(tf_data)
 
 def test_empty_data():
@@ -237,7 +223,7 @@ def test_wrong_data_type():
         "data": {}
     }
     
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         threatfox_adapt_ioc_list(tf_data)
 
 def test_wrong_data_list_type():
@@ -246,7 +232,7 @@ def test_wrong_data_list_type():
         "data": ["hola"]
     }
     
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         threatfox_adapt_ioc_list(tf_data)
 
 def test_wrong_ioc_type_type():
@@ -261,7 +247,7 @@ def test_wrong_ioc_type_type():
         ]
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         threatfox_adapt_ioc_list(tf_data)
 
 def test_url_without_ioc():
@@ -277,3 +263,20 @@ def test_url_without_ioc():
 
     result = threatfox_adapt_ioc_list(tf_data)
     assert result == []
+
+def test_ip_port():
+    tf_data = {
+        "query_status": "ok",
+        "data": [
+            {
+                "ioc_type": "ip:port",
+                "ioc": "128.1.1.1:0080"
+            }
+        ]
+    }
+
+    result = threatfox_adapt_ioc_list(tf_data)
+    assert len(result) == 1
+    assert result[0].value == "128.1.1.1:0080"
+    assert result[0].type == IOCType.IP_PORT
+    assert result[0].sources == {"threatfox"}

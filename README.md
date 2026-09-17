@@ -71,6 +71,7 @@ The internal model currently supports:
 | `IP` | IPv4 and IPv6 normalization |
 | `DOMAIN` | ASCII domain validation and normalization |
 | `SHA256` | 64-character hexadecimal SHA-256 values |
+| `IP_PORT` | Normalized IPv4:port |
 
 ThreatFox currently maps:
 
@@ -78,6 +79,7 @@ ThreatFox currently maps:
 |---|---|
 | `domain` | `DOMAIN` |
 | `sha256_hash` | `SHA256` |
+| `ip:port` | `IP_PORT` |
 
 Unsupported ThreatFox types are ignored rather than coerced into incompatible internal types.
 
@@ -204,7 +206,7 @@ This makes source provenance part of the model while allowing equivalent observa
 - [x] Deduplicate by `(type, value)`
 - [x] Merge source information
 - [x] Compose normalization and deduplication into a processing pipeline
-- [ ] Add `IP_PORT`
+- [x] Add `IP_PORT`
 - [ ] Add URL support
 - [ ] Add SHA-1 and MD5 support
 
