@@ -125,13 +125,14 @@ python -m threatintel.cli samples/iocs.json
 Example output:
 
 ```text
-Indicators processed: 4
-Unique indicators: 3
+Indicators processed: 5
+Unique indicators: 4
 Duplicates: 1
 
 ip: 1
 domain: 1
 sha256: 1
+ip:port: 1
 ```
 
 ## ThreatFox integration

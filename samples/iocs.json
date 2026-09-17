@@ -18,5 +18,11 @@
     "type": "sha256",
     "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
     "source": "feed_c"
+  },
+  {
+    "type": "ip:port",
+    "value": "192.161.1.1:0080",
+    "source": "feed_d"
   }
+
 ]
