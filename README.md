@@ -9,10 +9,12 @@ The project is being developed incrementally, with an emphasis on clear data mod
 ThreatIntel currently supports:
 
 - an `IOC` domain model with source provenance;
-- IOC types for IP addresses, domain names, and SHA-256 hashes;
+- IOC types for IP addresses, IP:port combinations, domain names, URLs, and SHA-256 hashes;
 - validation and normalization of:
   - IPv4 and IPv6 addresses;
+  - IPv4:port combinations;
   - domain names;
+  - HTTP/HTTPS URLs;
   - SHA-256 hashes;
 - deduplication using `(type, value)` as IOC identity;
 - merging source information when duplicate indicators are found;
@@ -68,10 +70,11 @@ The internal model currently supports:
 
 | Internal type | Notes |
 |---|---|
-| `IP` | IPv4 and IPv6 normalization |
+| `IP` | IPv4 and IPv6 validation and normalization |
 | `DOMAIN` | ASCII domain validation and normalization |
 | `SHA256` | 64-character hexadecimal SHA-256 values |
-| `IP_PORT` | Normalized IPv4:port |
+| `IP_PORT` |  IPv4 address and port validation and normalization |
+| `URL` | HTTP/HTTPS URL normalization with domain, IPv4 and IPv6 hosts |
 
 ThreatFox currently maps:
 
@@ -80,6 +83,9 @@ ThreatFox currently maps:
 | `domain` | `DOMAIN` |
 | `sha256_hash` | `SHA256` |
 | `ip:port` | `IP_PORT` |
+| `url` | `URL` |
+
+URL normalization canonicalizes the scheme, hostname, IP representation, and explicit port while preserving user information, path, query, and fragment data.
 
 Unsupported ThreatFox types are ignored rather than coerced into incompatible internal types.
 
@@ -104,6 +110,11 @@ Run the complete test suite with:
 
 ```bash
 python -m pytest
+```
+
+Run Ruff across the project with:
+```bash
+ruff check .
 ```
 
 The suite includes:
@@ -133,6 +144,7 @@ ip: 1
 domain: 1
 sha256: 1
 ip:port: 1
+url: 0
 ```
 
 ## ThreatFox integration
@@ -208,7 +220,7 @@ This makes source provenance part of the model while allowing equivalent observa
 - [x] Merge source information
 - [x] Compose normalization and deduplication into a processing pipeline
 - [x] Add `IP_PORT`
-- [ ] Add URL support
+- [x] Add URL support
 - [ ] Add SHA-1 and MD5 support
 
 ### Feed ingestion
@@ -258,7 +270,7 @@ This makes source provenance part of the model while allowing equivalent observa
 - [x] Integration and end-to-end tests
 - [x] Mocked HTTP tests without external network dependencies
 - [x] Tests for configuration and failure propagation
-- [ ] Add static analysis / linting
+- [x] Add static analysis / linting with Ruff
 - [ ] Add type checking
 - [ ] Add CI with GitHub Actions
 - [ ] Add structured logging

@@ -30,7 +30,7 @@ class FakeResponse:
                     },
 
                     {
-                        "ioc": "http:example.com",
+                        "ioc": "http://example.com/File",
                         "ioc_type": "url"
                     }
                 ]}
@@ -74,10 +74,12 @@ def test_deduplicates_iocs_across_sources(tmp_path, monkeypatch):
     full_list = adapted_threatfox_list + local_list
 
     final_list = process_iocs(full_list)
-    assert len(final_list) == 2
+    assert len(final_list) == 3
 
     final_list_by_type = {ioc.type: ioc for ioc in final_list}
     assert final_list_by_type[IOCType.DOMAIN].value == "evil.com"
     assert final_list_by_type[IOCType.DOMAIN].sources == {"threatfox", "local_feed"}
     assert final_list_by_type[IOCType.SHA256].value == "a" * 64
     assert final_list_by_type[IOCType.SHA256].sources == {"threatfox", "local_feed"}
+    assert final_list_by_type[IOCType.URL].value == "http://example.com/File"
+    assert final_list_by_type[IOCType.URL].sources == {"threatfox"}

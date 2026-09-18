@@ -27,7 +27,7 @@ class FakeResponse:
                     },
 
                     {
-                        "ioc": "http:example.com",
+                        "ioc": "HTTPS://User:Pass@EXAMPLE.COM./File",
                         "ioc_type": "url"
                     },
                     {
@@ -46,10 +46,10 @@ def test_threatfox_integration(monkeypatch):
     assert result["query_status"] == "ok"
 
     adapted_list = threatfox_adapt_ioc_list(result)
-    assert len(adapted_list) == 4
+    assert len(adapted_list) == 5
 
     final_list = process_iocs(adapted_list)    
-    assert len(final_list) == 3
+    assert len(final_list) == 4
 
     final_list_by_type = {ioc.type: ioc for ioc in final_list}
     assert final_list_by_type[IOCType.DOMAIN].value == "evil.com"
@@ -58,3 +58,5 @@ def test_threatfox_integration(monkeypatch):
     assert final_list_by_type[IOCType.SHA256].sources == {"threatfox"}
     assert final_list_by_type[IOCType.IP_PORT].value == "192.168.1.1:80"
     assert final_list_by_type[IOCType.IP_PORT].sources == {"threatfox"}
+    assert final_list_by_type[IOCType.URL].value == "https://User:Pass@example.com/File"
+    assert final_list_by_type[IOCType.URL].sources == {"threatfox"}

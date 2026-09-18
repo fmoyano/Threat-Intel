@@ -3,7 +3,8 @@ from threatintel.parser import parse_ioc
 
 MAPPED_TYPES = {"domain": IOCType.DOMAIN.value,
                 "sha256_hash": IOCType.SHA256.value,
-                "ip:port": IOCType.IP_PORT.value}
+                "ip:port": IOCType.IP_PORT.value,
+                "url": IOCType.URL.value}
 
 def threatfox_adapt_ioc_list(data: dict) -> list[IOC]:
 

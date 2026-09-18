@@ -7,6 +7,7 @@ class IOCType(Enum):
     DOMAIN = "domain"
     SHA256 = "sha256"
     IP_PORT = "ip:port"
+    URL = "url"
 
 @dataclass
 class IOC:

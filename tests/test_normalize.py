@@ -7,6 +7,7 @@ from threatintel.normalize import (
     normalize_ip,
     normalize_ip_port,
     normalize_sha256,
+    normalize_url,
 )
 
 
@@ -177,3 +178,153 @@ def test_normalization_ip_port_numeric_unicode_fails():
 def test_normalization_ip_port_rejects_ipv6():
     with pytest.raises(ValueError):
         normalize_ip_port("[2001:db8::1]:443")
+
+def test_normalize_url_domain_lowercase_and_removes_final_dot():
+    value = "https://EVIL.COM./Mozi.m"
+    result = normalize_url(value)
+
+    assert result == "https://evil.com/Mozi.m"
+
+def test_normalize_url_lowercases_scheme_and_hostname():
+    value = "HTTP://EVIL.COM/Mozi.m"
+    result = normalize_url(value)
+
+    assert result == "http://evil.com/Mozi.m"
+
+def test_normalize_url_lowercases_scheme_and_hostname_with_numbers():
+    value = "HTTP://The4EVIL12.COM/Mozi.m"
+    result = normalize_url(value)
+
+    assert result == "http://the4evil12.com/Mozi.m"
+
+def test_normalize_url_preserves_path_case():
+    value = "https://example.com/Mozi.M"
+    result = normalize_url(value)
+
+    assert result == value
+
+def test_normalize_url_preserves_query_and_fragment():
+    value = "https://Example.com/A?x=1#frag"
+    result = normalize_url(value)
+
+    assert result == "https://example.com/A?x=1#frag"
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "ftp://example.com/file",
+        "ssh://example.com/",
+    ],
+)
+def test_normalize_url_rejects_unsupported_scheme(value):
+    with pytest.raises(ValueError):
+        normalize_url(value)
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https:///path",
+        "http://",
+    ],
+)
+def test_normalize_url_requires_hostname(value):
+    with pytest.raises(ValueError):
+        normalize_url(value)
+
+def test_normalize_url_accepts_ip_hostname():
+    value = "http://192.168.1.1:8080/Mozi.m"
+    result = normalize_url(value)
+
+    assert result == value
+
+def test_normalize_url_rejects_invalid_ip_hostname():
+    with pytest.raises(ValueError):
+        normalize_url("http://999.1.1.1:8080/file")
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://example.com:0/",
+        "http://example.com:65535/",
+    ],
+)
+def test_normalize_url_accepts_port_limits(value):
+    assert normalize_url(value) == value
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://example.com:65536/",
+        "http://example.com:-1/",
+    ],
+)
+def test_normalize_url_rejects_invalid_port(value):
+    with pytest.raises(ValueError):
+        normalize_url(value)
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://example.com:80/",
+        "https://example.com:443/",
+    ],
+)
+def test_normalize_url_preserves_explicit_default_port(value):
+    assert normalize_url(value) == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://-evil.com/file",
+        "http://evil_.com/file",
+        "http://singlelabel/file",
+    ],
+)
+def test_normalize_url_rejects_invalid_domain_hostname(value):
+    with pytest.raises(ValueError):
+        normalize_url(value)
+
+def test_normalize_url_normalizes_port_leading_zeroes():
+    assert normalize_url("http://example.com:0080/file") == \
+           "http://example.com:80/file"
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("https://[2001:db8::1]/file", "https://[2001:db8::1]/file"),
+        ("https://[2001:0DB8:0:0:0:0:0:1]/file", "https://[2001:db8::1]/file"),
+        ("https://[2001:0DB8:0:0:0:0:0:1]:0443/A", "https://[2001:db8::1]:443/A")
+    ],
+)
+def test_normalize_url_ipv6(value, expected):
+    assert expected == normalize_url(value)
+
+def test_normalize_url_invalid_ipv6_raises_error():
+    with pytest.raises(ValueError):
+        normalize_url("https://[2001:db8::::1]")
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("https://alice@example.com/file", "https://alice@example.com/file"),
+        ("https://alice:secret@example.com/file", "https://alice:secret@example.com/file"),
+        ("https://alice:@example.com/file", "https://alice:@example.com/file"),
+        ("https://:secret@example.com/file", "https://:secret@example.com/file"),
+        ("https://@example.com/file", "https://@example.com/file")
+    ],
+)
+def test_normalize_url_userinfo(value, expected):
+    assert expected == normalize_url(value)
+
+def test_normalize_url_preserves_userinfo_case():
+    value = "HTTPS://Alice:SeCrEt@EXAMPLE.COM/File"
+
+    assert normalize_url(value) == \
+        "https://Alice:SeCrEt@example.com/File"
+
+def test_normalize_url_userinfo_ipv6_and_port():
+    value = "https://alice:secret@[2001:0DB8:0:0:0:0:0:1]:08443/File"
+
+    assert normalize_url(value) == \
+        "https://alice:secret@[2001:db8::1]:8443/File"

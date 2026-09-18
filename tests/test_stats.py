@@ -76,3 +76,5 @@ def test_stats_one_duplicate():
     assert stats.count_by_type[IOCType.DOMAIN] == 1
     assert stats.count_by_type[IOCType.IP] == 1
     assert stats.count_by_type[IOCType.SHA256] == 1
+    assert stats.count_by_type[IOCType.IP_PORT] == 0
+    assert stats.count_by_type[IOCType.URL] == 0

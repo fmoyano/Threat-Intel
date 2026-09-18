@@ -48,22 +48,6 @@ def test_two_domains():
     assert result[1].value == "evil2.example"
     assert result[1].sources == {"threatfox"}
 
-def test_ignore_url():
-    tf_data = {
-        "query_status": "ok",
-        "data": [
-            {
-                "ioc": "evil.example",
-                "ioc_type": "url",
-                "url_value": "http://example.com"
-            }            
-        ]
-    }
-
-    result = threatfox_adapt_ioc_list(tf_data)
-    assert len(result) == 0
-
-
 def test_url_domain():
     tf_data = {
         "query_status": "ok",
@@ -74,18 +58,20 @@ def test_url_domain():
                 "malware": "win.something"
             },
             {
-                "ioc": "evil2.example",
-                "ioc_type": "url",
-                "url_value": "http://example.com"
+                "ioc": "HTTP://EXAMPLE.COM./File",
+                "ioc_type": "url",                
             }
         ]
     }
 
     result = threatfox_adapt_ioc_list(tf_data)
-    assert len(result) == 1
-    assert result[0].type == IOCType.DOMAIN
-    assert result[0].value == "evil.example"
-    assert result[0].sources == {"threatfox"}
+    assert len(result) == 2
+
+    result_by_type = {ioc.type: ioc for ioc in result}    
+    assert result_by_type[IOCType.DOMAIN].value == "evil.example"
+    assert result_by_type[IOCType.DOMAIN].sources == {"threatfox"}
+    assert result_by_type[IOCType.URL].value == "HTTP://EXAMPLE.COM./File"
+    assert result_by_type[IOCType.URL].sources == {"threatfox"}
 
 def test_keeps_domain_value():
     tf_data = {
@@ -260,9 +246,8 @@ def test_url_without_ioc():
             }
         ]
     }
-
-    result = threatfox_adapt_ioc_list(tf_data)
-    assert result == []
+    with pytest.raises(ValueError):
+        threatfox_adapt_ioc_list(tf_data)
 
 def test_ip_port():
     tf_data = {
